@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>ReadSharp</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#ffffff;--bg2:#f5f5f0;--bg3:#eeede8;
+  --text:#1a1a1a;--text2:#555;--text3:#999;
+  --border:#e0dfd8;--border2:#c8c7c0;
+  --green:#1D9E75;--green-dark:#0F6E56;--green-light:rgba(29,158,117,0.1);
+  --red:#E24B4A;--red-light:rgba(226,75,74,0.08);
+  --amber:#BA7517;--amber-light:rgba(186,117,23,0.1);
+  --purple:#534AB7;--purple-light:rgba(83,74,183,0.1);
+  --radius:10px;--radius-lg:14px;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#1c1c1e;--bg2:#2c2c2e;--bg3:#3a3a3c;
+    --text:#f2f2f7;--text2:#aeaeb2;--text3:#636366;
+    --border:#3a3a3c;--border2:#48484a;
+    --green:#30d158;--green-dark:#25a244;--green-light:rgba(48,209,88,0.12);
+    --red:#ff453a;--red-light:rgba(255,69,58,0.1);
+    --amber:#ffd60a;--amber-light:rgba(255,214,10,0.1);
+    --purple:#7F77DD;--purple-light:rgba(127,119,221,0.12);
+  }
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;background:var(--bg3);color:var(--text);min-height:100vh}
+.app{max-width:600px;margin:0 auto;background:var(--bg);min-height:100vh}
+.header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px;border-bottom:0.5px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:10}
+.logo{font-size:18px;font-weight:600}.logo span{color:var(--green)}
+.nav-btns{display:flex;gap:6px}
+.nav-btn{font-size:13px;padding:6px 12px;border:0.5px solid var(--border2);border-radius:20px;background:transparent;color:var(--text2);cursor:pointer}
+.nav-btn.active-nav{background:var(--green);color:#fff;border-color:var(--green)}
+.content{padding:20px}
+.screen{display:none}.screen.active{display:block}
+
+/* passage list */
+.passage-list{display:flex;flex-direction:column;gap:10px}
+.passage-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:16px;cursor:pointer;transition:border-color .15s}
+.passage-card:active{background:var(--bg2)}
+.passage-card.completed{border-color:var(--green);background:var(--green-light)}
+.pc-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.pc-title{font-size:15px;font-weight:500;color:var(--text)}
+.pc-level{font-size:11px;padding:2px 8px;border-radius:10px;font-weight:500}
+.lv1{background:var(--green-light);color:var(--green-dark)}
+.lv2{background:var(--amber-light);color:var(--amber)}
+.lv3{background:rgba(226,75,74,0.1);color:#993C1D}
+.lv4{background:var(--purple-light);color:var(--purple)}
+.pc-meta{font-size:12px;color:var(--text3)}
+.pc-check{font-size:18px;color:var(--green);margin-left:8px}
+
+/* reading phase */
+.level-badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:5px 12px;border-radius:20px;background:var(--bg2);color:var(--text2);margin-bottom:16px}
+.level-dot{width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0}
+.timer-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.timer{font-size:32px;font-weight:300;font-variant-numeric:tabular-nums;letter-spacing:-0.5px}
+.target-wpm{font-size:13px;color:var(--text3)}.target-wpm strong{color:var(--green);font-weight:500}
+.passage-meta{display:flex;gap:12px;margin-bottom:12px}
+.meta-chip{font-size:12px;color:var(--text3)}.meta-chip strong{color:var(--text2);font-weight:500}
+.passage-card-main{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:20px;margin-bottom:16px;position:relative;min-height:140px}
+.passage-blur{filter:blur(5px);user-select:none;pointer-events:none;line-height:1.9;font-size:15px}
+.passage-reveal{line-height:1.9;font-size:15px}
+.passage-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;border-radius:var(--radius-lg)}
+.passage-overlay p{font-size:14px;color:var(--text2);text-align:center;padding:0 20px}
+.btn-row{display:flex;gap:10px}
+.btn-primary{flex:1;padding:14px;border:none;border-radius:var(--radius);background:var(--green);color:#fff;font-size:16px;font-weight:600;cursor:pointer}
+.btn-primary:active{background:var(--green-dark)}
+.btn-primary:disabled{background:var(--bg2);color:var(--text3)}
+.btn-secondary{flex:1;padding:14px;border:1px solid var(--border2);border-radius:var(--radius);background:transparent;color:var(--text);font-size:16px;cursor:pointer}
+.btn-secondary:active{background:var(--bg2)}
+.btn-back{font-size:13px;padding:6px 12px;border:0.5px solid var(--border2);border-radius:20px;background:transparent;color:var(--text2);cursor:pointer;margin-bottom:16px}
+
+/* stats */
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.stat-card{background:var(--bg2);border-radius:var(--radius);padding:12px;text-align:center}
+.stat-val{font-size:22px;font-weight:500}.stat-lbl{font-size:11px;color:var(--text3);margin-top:2px}
+.feedback-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+.chip{font-size:12px;padding:4px 10px;border-radius:20px}
+.chip-up{background:var(--green-light);color:var(--green-dark)}
+.chip-same{background:var(--bg2);color:var(--text3)}
+.chip-down{background:var(--red-light);color:var(--red)}
+.divider{height:0.5px;background:var(--border);margin:20px 0}
+.section-label{font-size:12px;font-weight:500;color:var(--text3);letter-spacing:.04em;text-transform:uppercase;margin-bottom:12px}
+
+/* questions */
+.q-item{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:12px}
+.q-type{font-size:11px;color:var(--text3);margin-bottom:6px;font-weight:500;letter-spacing:.04em;text-transform:uppercase}
+.q-text{font-size:14px;line-height:1.65;margin-bottom:12px}
+.q-opts{display:flex;flex-direction:column;gap:8px}
+.q-opt{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:0.5px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:13px;background:transparent;text-align:left;line-height:1.5;width:100%}
+.q-opt:active{background:var(--bg2)}
+.q-opt.selected{border-color:var(--green);background:var(--green-light)}
+.q-opt.correct{border-color:var(--green);background:var(--green-light);color:var(--green-dark)}
+.q-opt.wrong{border-color:var(--red);background:var(--red-light);color:var(--red)}
+.opt-letter{font-weight:600;min-width:16px;flex-shrink:0}
+.explanation{font-size:12px;color:var(--text2);margin-top:10px;padding-top:10px;border-top:0.5px solid var(--border);line-height:1.6;display:none}
+.score-card{background:var(--bg2);border-radius:var(--radius-lg);padding:24px;text-align:center;margin-bottom:16px}
+.score-big{font-size:48px;font-weight:300;color:var(--green)}.score-sub{font-size:14px;color:var(--text2);margin-top:6px}
+
+/* word storage */
+.word-list{display:flex;flex-direction:column;gap:8px}
+.word-item{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.word-en{font-size:15px;font-weight:500}
+.word-pos{font-size:11px;color:var(--text3)}
+.word-ja{font-size:13px;color:var(--text2);margin-top:3px;line-height:1.5}
+.word-date{font-size:11px;color:var(--text3);margin-top:3px}
+.review-badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;background:var(--amber-light);color:var(--amber);margin-top:4px}
+.remove-btn{font-size:12px;padding:4px 10px;border:0.5px solid var(--border2);border-radius:20px;background:transparent;color:var(--text3);cursor:pointer;flex-shrink:0}
+.remove-btn:active{border-color:var(--red);color:var(--red)}
+.empty-state{text-align:center;padding:48px 20px;color:var(--text3);font-size:14px;line-height:1.8}
+.review-notice{display:none;align-items:center;gap:6px;font-size:13px;padding:8px 12px;background:var(--green-light);border-radius:var(--radius);color:var(--green-dark);margin-bottom:16px}
+
+/* wpm history */
+.wpm-trend{margin-bottom:20px}
+.wpm-bars{display:flex;gap:5px;align-items:flex-end;height:44px;margin-bottom:4px}
+.wpm-bar{flex:1;background:#9FE1CB;border-radius:3px 3px 0 0}
+.wpm-bar.cur{background:var(--green)}
+.progress-wrap{margin-bottom:16px}
+.progress-meta{display:flex;justify-content:space-between;font-size:12px;color:var(--text3);margin-bottom:5px}
+.progress-track{background:var(--bg2);border-radius:4px;height:4px;overflow:hidden}
+.progress-fill{height:100%;background:var(--green);border-radius:4px;transition:width .5s}
+
+/* word token */
+.word-token{cursor:pointer;border-radius:3px;padding:1px 0}
+.word-token:hover{background:var(--green-light)}
+.word-token.stocked{background:var(--green-light);color:var(--green-dark)}
+
+/* bottom sheet */
+.tt-overlay{position:fixed;inset:0;z-index:100;display:none;align-items:flex-end}
+.tt-overlay.open{display:flex}
+.tt-backdrop{position:absolute;inset:0;background:rgba(0,0,0,0.3)}
+.tt-sheet{position:relative;width:100%;max-width:600px;margin:0 auto;background:var(--bg);border-radius:20px 20px 0 0;padding:20px 20px 36px;z-index:1;max-height:60vh;overflow-y:auto}
+.tt-handle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 16px}
+.tt-word{font-size:20px;font-weight:600;margin-bottom:4px}
+.tt-pos{font-size:12px;color:var(--text3);margin-bottom:8px}
+.tt-meaning{font-size:14px;color:var(--text2);line-height:1.6;margin-bottom:14px}
+.tt-btn{padding:12px;border-radius:var(--radius);font-size:14px;cursor:pointer;border:1px solid var(--border2);background:transparent;color:var(--text);width:100%}
+.tt-btn:active{background:var(--bg2)}
+.tt-btn.stocked-state{border-color:var(--green);color:var(--green)}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="logo">Read<span>Sharp</span></div>
+    <div class="nav-btns">
+      <button class="nav-btn active-nav" onclick="showScreen('list',this)">Passages</button>
+      <button class="nav-btn" onclick="showScreen('storage',this)">Words <span id="storage-count"></span></button>
+    </div>
+  </div>
+
+  <!-- Passage list -->
+  <div id="screen-list" class="screen active content">
+    <div style="margin-bottom:16px">
+      <div class="section-label" style="margin-bottom:4px">All passages</div>
+      <div style="font-size:12px;color:var(--text3)" id="list-progress-text"></div>
+    </div>
+    <div id="wpm-trend-section" style="display:none" class="wpm-trend">
+      <div class="section-label">WPM history</div>
+      <div class="wpm-bars" id="wpm-history-chart"></div>
+      <div style="font-size:10px;color:var(--text3)">Last 7 sessions</div>
+    </div>
+    <div class="passage-list" id="passage-list"></div>
+  </div>
+
+  <!-- Reading -->
+  <div id="screen-reading" class="screen content">
+    <button class="btn-back" onclick="showScreen('list',null)">← Back</button>
+    <div id="phase-reading">
+      <div class="level-badge"><div class="level-dot"></div><span id="level-label">Level 1</span></div>
+      <div class="timer-row">
+        <div class="timer" id="timer">0:00</div>
+        <div class="target-wpm">Target: <strong id="target-wpm">—</strong> WPM</div>
+      </div>
+      <div class="passage-meta">
+        <div class="meta-chip"><strong id="word-count-display">—</strong> words</div>
+        <div class="meta-chip">Topic: <strong id="topic-display">—</strong></div>
+      </div>
+      <div class="passage-card-main">
+        <div class="passage-overlay" id="passage-overlay"><p>Press Start to reveal and begin timing</p></div>
+        <div class="passage-blur" id="passage-text-wrap"></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-primary" id="start-btn" onclick="startReading()">Start</button>
+        <button class="btn-primary" id="finish-btn" onclick="finishReading()" style="display:none;background:var(--green-dark)">Finish</button>
+      </div>
+    </div>
+
+    <div id="phase-questions" style="display:none">
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-val" id="result-wpm">—</div><div class="stat-lbl">WPM</div></div>
+        <div class="stat-card"><div class="stat-val" id="result-time">—</div><div class="stat-lbl">Time</div></div>
+        <div class="stat-card"><div class="stat-val" id="result-words">—</div><div class="stat-lbl">Words</div></div>
+      </div>
+      <div class="feedback-chips" id="wpm-feedback"></div>
+      <div class="divider"></div>
+      <div class="section-label">Comprehension check</div>
+      <div id="questions-wrap"></div>
+      <button class="btn-primary" id="check-btn" onclick="checkAnswers()" style="margin-bottom:12px">Check answers</button>
+      <div id="score-section" style="display:none">
+        <div class="score-card"><div class="score-big" id="score-text">—</div><div class="score-sub" id="score-sub">—</div></div>
+        <button class="btn-secondary" onclick="showScreen('list',null)">← Back to list</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Word storage -->
+  <div id="screen-storage" class="screen content">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div class="section-label" style="margin:0">Word storage</div>
+      <div class="review-notice" id="review-notice"><span id="review-notice-text"></span></div>
+    </div>
+    <div id="word-storage-list"><div class="empty-state">単語はまだありません。<br>長文を読みながら単語をタップして調べてみましょう。</div></div>
+  </div>
+</div>
+
+<!-- Bottom sheet -->
+<div class="tt-overlay" id="tt-overlay" onclick="closeTT(event)">
+  <div class="tt-backdrop"></div>
+  <div class="tt-sheet">
+    <div class="tt-handle"></div>
+    <div class="tt-word" id="tt-word"></div>
+    <div class="tt-pos" id="tt-pos"></div>
+    <div class="tt-meaning" id="tt-meaning"></div>
+    <button class="tt-btn" id="tt-stock-btn" onclick="stockWord()">+ Stock this word</button>
+  </div>
+</div>
+
+<script>
+// ===== PASSAGE DATA =====
+const PASSAGES = [
+  {id:1,title:"The Paradox of Choice",topic:"Behavioral Economics",level:1,wordCount:238,
+  text:`In contemporary consumer society, the proliferation of options has come to be regarded as an unequivocal good. The underlying assumption is straightforward: more choices empower individuals to find precisely what suits their needs and preferences. However, psychologist Barry Schwartz has compellingly argued that this conventional wisdom is fundamentally flawed, coining the term 'the paradox of choice' to describe a counterintuitive phenomenon.\n\nWhen confronted with an overwhelming number of alternatives, individuals frequently experience a debilitating form of decision paralysis. Rather than feeling liberated by abundance, they become anxious and indecisive. Schwartz's research demonstrates that supermarkets offering hundreds of varieties of jam actually sell less than those offering a limited selection. The cognitive burden of evaluating numerous options proves too taxing for many consumers.\n\nFurthermore, even after making a decision, individuals who chose from a vast array of options tend to experience greater regret and dissatisfaction than those who selected from a smaller set. This phenomenon, known as the 'opportunity cost effect,' occurs because awareness of unchosen alternatives diminishes satisfaction with the chosen option. The more alternatives foregone, the more pronounced this effect becomes.\n\nThe implications of this research extend beyond consumer behaviour into domains such as education, healthcare, and public policy. When patients are presented with multiple treatment options, for instance, they often defer to their physician's recommendation rather than engage in meaningful deliberation. Schwartz advocates for what he terms 'satisficing' — the practice of selecting an option that meets a sufficient threshold rather than exhaustively seeking the optimal choice — as a more psychologically sustainable approach to decision-making.`,
+  questions:[
+    {type:"Main idea",question:"What is the central argument of this passage?",options:["More choices always lead to better outcomes for consumers","An abundance of choices can paradoxically reduce satisfaction and increase anxiety","Supermarkets should reduce the number of products they offer","Barry Schwartz is the most influential psychologist of his generation"],answer:1,explanation:"The passage argues that too many choices leads to paralysis, regret, and dissatisfaction — the 'paradox of choice.'"},
+    {type:"Detail",question:"What is the 'opportunity cost effect'?",options:["The financial cost of making poor consumer decisions","Dissatisfaction caused by awareness of unchosen alternatives","The tendency to defer decisions to experts","Anxiety experienced before making a decision"],answer:1,explanation:"The passage defines 'opportunity cost effect' as diminished satisfaction caused by awareness of alternatives not chosen."},
+    {type:"Detail",question:"What does Schwartz mean by 'satisficing'?",options:["Seeking the single best option from all available choices","Feeling satisfied after any purchase","Choosing an option that meets a sufficient standard rather than seeking the perfect one","Limiting the number of options available to consumers"],answer:2,explanation:"Satisficing means selecting an option that meets a sufficient threshold rather than exhaustively seeking the optimal choice."},
+    {type:"Inference",question:"What can be inferred about patients presented with multiple medical treatment options?",options:["They always make better decisions than patients with fewer options","They tend to feel overwhelmed and often defer to their doctor","They prefer having as many options as possible","They make faster decisions than consumers choosing products"],answer:1,explanation:"The passage states patients 'often defer to their physician's recommendation rather than engage in meaningful deliberation.'"},
+    {type:"Vocabulary in context",question:"'Debilitating' most nearly means:",options:["Motivating","Weakening or incapacitating","Temporary","Predictable"],answer:1,explanation:"'Debilitating form of decision paralysis' means a severely weakening inability to decide."}
+  ]},
+  {id:2,title:"Neuroplasticity and Learning",topic:"Cognitive Neuroscience",level:1,wordCount:261,
+  text:`For much of the twentieth century, neuroscientists operated under the assumption that the adult brain was essentially static — a fixed structure incapable of significant change once the developmental period had concluded. This view held that neurons, once lost, could not be replaced, and that the neural pathways established during childhood were largely permanent. Contemporary research has thoroughly dismantled this paradigm, revealing instead a brain of remarkable adaptability.\n\nNeuroplasticity refers to the brain's capacity to reorganise itself by forming new neural connections throughout life. This process occurs at multiple levels: synaptic plasticity involves changes in the strength of existing connections between neurons, while structural plasticity encompasses the growth of new synapses, dendrites, and in some regions, entirely new neurons through a process called neurogenesis. Both forms are profoundly influenced by experience and learning.\n\nLongitudinal studies of professional musicians provide compelling evidence for experience-dependent plasticity. Violinists, for example, exhibit measurably enlarged cortical representations of the fingers of their left hand — the hand that performs the complex fingering movements — compared to non-musicians. Similarly, London taxi drivers, who must memorise an extraordinarily complex street network, demonstrate significantly enlarged hippocampal volumes, the brain region associated with spatial navigation and memory.\n\nThese findings carry profound implications for education and rehabilitation. Stroke patients, for instance, can often recover lost functions through intensive therapeutic exercises that stimulate the brain to recruit alternative neural pathways. Moreover, the recognition that the brain remains malleable throughout adulthood has encouraged a fundamental reconception of learning — not as the passive absorption of fixed information, but as an active process that physically transforms the organ doing the learning.`,
+  questions:[
+    {type:"Main idea",question:"What is the primary focus of this passage?",options:["The history of neuroscience in the twentieth century","How the brain's capacity for change challenges earlier assumptions and has practical implications","Why musicians have superior intelligence to other professionals","The process of neurogenesis in adult humans"],answer:1,explanation:"The passage traces the shift from a static to a dynamic view of the brain and discusses its implications for learning and rehabilitation."},
+    {type:"Detail",question:"What distinguishes synaptic plasticity from structural plasticity?",options:["Synaptic plasticity occurs only in children","Synaptic plasticity involves changes in connection strength; structural plasticity involves physical growth","Synaptic plasticity is more important for learning","Structural plasticity refers only to neurogenesis"],answer:1,explanation:"Synaptic plasticity involves changes in connection strength; structural plasticity encompasses growth of new synapses, dendrites, and neurons."},
+    {type:"Detail",question:"What does the example of London taxi drivers illustrate?",options:["That navigation skills are innate rather than learned","That experience-dependent plasticity can enlarge specific brain regions","That the hippocampus controls all forms of memory","That professional training always improves brain function"],answer:1,explanation:"Taxi drivers' enlarged hippocampi demonstrate that intensive experience physically enlarges the relevant brain region."},
+    {type:"Inference",question:"What can be inferred about the twentieth-century view of brain injury recovery?",options:["It was supported by extensive longitudinal studies","It underestimated the brain's capacity for recovery from injury","It was correct about neurogenesis being impossible","It focused primarily on the hippocampus"],answer:1,explanation:"If the brain was thought to be static, recovery through neural reorganisation would have been considered impossible."},
+    {type:"Vocabulary in context",question:"'Malleable' most nearly means:",options:["Fragile","Capable of being shaped or changed","Intelligent","Resistant to change"],answer:1,explanation:"'Malleable throughout adulthood' means the brain remains capable of being shaped or changed."}
+  ]},
+  {id:3,title:"The Ethics of Artificial Intelligence",topic:"Technology Ethics",level:2,wordCount:271,
+  text:`The accelerating development of artificial intelligence systems capable of performing tasks previously considered the exclusive domain of human cognition has precipitated an urgent and wide-ranging ethical debate. At the forefront of this discussion lies a cluster of interrelated concerns: algorithmic bias, accountability, transparency, and the long-term implications of increasingly autonomous decision-making systems.\n\nAlgorithmic bias — the tendency of AI systems to produce systematically skewed outputs reflecting the prejudices embedded in their training data — has emerged as a particularly pressing concern. Facial recognition systems, for instance, have been documented to exhibit significantly higher error rates for individuals with darker skin tones, a disparity attributable to the underrepresentation of such individuals in training datasets. When these systems are deployed in high-stakes contexts such as law enforcement or hiring, such biases can perpetuate and amplify existing social inequities.\n\nThe question of accountability presents equally formidable challenges. Traditional legal and ethical frameworks assign responsibility to identifiable human agents. AI systems, however, operate through processes of such complexity that even their designers may be unable to fully explain a given output — a phenomenon known as the 'black box' problem. When an autonomous vehicle causes an accident or a medical diagnosis algorithm makes a fatal error, the question of who bears moral and legal responsibility remains deeply contested.\n\nProponents of AI development counter that properly designed systems can surpass human performance in consistency and objectivity. A well-trained diagnostic AI, freed from the fatigue and cognitive biases that afflict human clinicians, may ultimately save far more lives than it endangers. The challenge, these advocates argue, lies not in resisting technological progress but in developing robust regulatory frameworks capable of ensuring that AI systems are designed, tested, and deployed responsibly.`,
+  questions:[
+    {type:"Main idea",question:"What is the passage primarily concerned with?",options:["The technical processes by which AI systems are trained","Ethical challenges posed by AI and potential responses to them","Why AI systems are superior to human decision-makers","The history of artificial intelligence research"],answer:1,explanation:"The passage examines key ethical concerns — bias, accountability — and presents both criticisms and defences of AI development."},
+    {type:"Detail",question:"What does the passage identify as a cause of algorithmic bias?",options:["Deliberate programming by biased engineers","Underrepresentation of certain groups in training data","Limitations in camera hardware","The complexity of human facial features"],answer:1,explanation:"Higher error rates for darker skin tones are attributed to 'underrepresentation of such individuals in training datasets.'"},
+    {type:"Detail",question:"What is the 'black box' problem?",options:["AI systems that operate without electricity","The inability of designers to fully explain an AI system's outputs","Data that is encrypted and inaccessible","The tendency of AI to make random errors"],answer:1,explanation:"The 'black box' problem refers to AI processes being so complex that even designers cannot fully explain a given output."},
+    {type:"Inference",question:"What can be inferred about the author's attitude toward AI development?",options:["The author believes AI development should be halted immediately","The author presents a balanced view acknowledging both risks and potential benefits","The author fully endorses AI as superior to human judgment","The author believes regulation is impossible"],answer:1,explanation:"The passage presents ethical concerns objectively and includes proponents' arguments, suggesting a balanced stance."},
+    {type:"Vocabulary in context",question:"'Perpetuate' most nearly means:",options:["Eliminate","Cause to continue indefinitely","Investigate","Reduce gradually"],answer:1,explanation:"'Perpetuate and amplify existing social inequities' means to cause those inequities to continue and grow."}
+  ]},
+  {id:4,title:"Urban Heat Islands",topic:"Environmental Science",level:2,wordCount:267,
+  text:`Metropolitan areas across the globe are experiencing a phenomenon that exacerbates the already considerable challenges posed by climate change: the urban heat island effect. This term describes the measurably elevated temperatures observed in densely built urban environments relative to their surrounding rural counterparts, a discrepancy that can reach as much as ten degrees Celsius under certain atmospheric conditions.\n\nThe mechanisms driving this effect are multiple and mutually reinforcing. Dark surfaces such as asphalt roads and tar rooftops absorb solar radiation with far greater efficiency than the vegetated landscapes they replace, retaining heat that is subsequently released during the night and preventing urban temperatures from falling as rapidly as those in rural areas. Simultaneously, the geometric configuration of urban canyons — the corridors formed between tall buildings — traps longwave radiation that would otherwise escape into the atmosphere. The dense concentration of human activity, from vehicle engines to air conditioning units, adds further anthropogenic heat to the urban environment.\n\nThe consequences extend well beyond mere discomfort. Epidemiological research consistently demonstrates elevated mortality rates during heat waves in urban populations, particularly among the elderly and those with pre-existing cardiovascular conditions. Heat also intensifies the formation of ground-level ozone and other photochemical pollutants, compounding the respiratory health burdens already associated with urban air quality.\n\nUrban planners are increasingly adopting mitigation strategies informed by ecological principles. Green roofs planted with vegetation and reflective 'cool roofs' coated with highly emissive materials both reduce surface temperatures significantly. Strategic tree planting provides shade, introduces evapotranspiration, and can reduce local temperatures by several degrees. Such interventions, when implemented at sufficient scale, offer a viable pathway toward more thermally equitable and environmentally resilient cities.`,
+  questions:[
+    {type:"Main idea",question:"What is the main purpose of this passage?",options:["To argue that climate change is primarily an urban problem","To explain the urban heat island effect, its causes, consequences, and solutions","To compare temperatures in cities and rural areas globally","To advocate for the elimination of asphalt in cities"],answer:1,explanation:"The passage systematically covers the definition, causes, health consequences, and mitigation strategies of the urban heat island effect."},
+    {type:"Detail",question:"How do 'urban canyons' contribute to the heat island effect?",options:["They channel cool wind into city centres","They trap longwave radiation that would otherwise escape","They increase vegetation in cities","They reflect solar radiation back into the atmosphere"],answer:1,explanation:"The passage states that 'urban canyons trap longwave radiation that would otherwise escape into the atmosphere.'"},
+    {type:"Detail",question:"Which groups are most vulnerable during urban heat waves?",options:["Children and athletes","The elderly and those with cardiovascular conditions","Construction workers and cyclists","Low-income residents and tourists"],answer:1,explanation:"The passage mentions 'the elderly and those with pre-existing cardiovascular conditions' as particularly at risk."},
+    {type:"Inference",question:"What can be inferred about green roofs and cool roofs?",options:["They are too expensive to implement widely","They work through different physical mechanisms to achieve similar cooling outcomes","Cool roofs are more effective than green roofs","They are only effective in tropical climates"],answer:1,explanation:"Green roofs use vegetation while cool roofs use reflective materials — different mechanisms, both reducing surface temperatures."},
+    {type:"Vocabulary in context",question:"'Anthropogenic' most nearly means:",options:["Natural and spontaneous","Caused or produced by human activity","Related to ancient civilisations","Occurring at night"],answer:1,explanation:"'Anthropogenic heat' refers to heat generated by human activities such as vehicles and air conditioning."}
+  ]},
+  {id:5,title:"The Linguistics of Silence",topic:"Linguistic Anthropology",level:2,wordCount:263,
+  text:`In Western communicative traditions, silence is frequently interpreted as an absence — a void to be filled, an awkwardness to be resolved. Conversational participants who allow pauses to extend beyond a second or two are often perceived as evasive, disengaged, or cognitively slow. This cultural disposition toward verbal continuity is so deeply internalised that many speakers are scarcely aware of it, experiencing only a vague discomfort when silence intrudes upon dialogue.\n\nCross-cultural linguistic research reveals, however, that silence carries profoundly different communicative functions across cultures and contexts. Among the Western Apache of Arizona, as documented by anthropologist Keith Basso, silence is actively deployed as a marker of respect in the presence of strangers, during periods of social uncertainty, and when interacting with individuals undergoing significant life transitions. Rather than signalling disengagement, Apache silence communicates attentiveness and social sensitivity.\n\nSimilarly, in many East Asian communicative contexts, silence following a question or proposal is frequently interpreted as thoughtful consideration rather than ignorance or reluctance. Japanese conversational norms, for instance, accommodate extended pauses as a demonstration of the gravity with which a matter is being weighed. The Finnish communicative tradition likewise valorises silence as a mark of sincerity and careful deliberation.\n\nThe practical implications of these differences are considerable in multicultural professional environments. Negotiators, educators, and healthcare providers operating across cultural boundaries may systematically misinterpret the silences of their interlocutors, attributing negative communicative intent to what is in fact a culturally appropriate and even respectful communicative choice. Developing what scholars term 'communicative competence' — an awareness of the culturally variable meanings of communicative behaviours — is increasingly recognised as an essential professional skill in a globalised world.`,
+  questions:[
+    {type:"Main idea",question:"What is the central argument of this passage?",options:["Western cultures communicate more effectively than Eastern cultures","Silence has universally negative connotations in professional settings","The meaning of silence varies significantly across cultures, with important practical implications","Keith Basso's research is the most important in linguistic anthropology"],answer:2,explanation:"The passage argues that silence carries different meanings across cultures and that misunderstanding this has real professional consequences."},
+    {type:"Detail",question:"In what situations do Western Apache deploy silence?",options:["During formal speeches and ceremonies only","When interacting with strangers, during social uncertainty, and with people undergoing life transitions","When they disagree with what is being said","In all professional and educational contexts"],answer:1,explanation:"Basso's research documents Apache silence as used with strangers, during social uncertainty, and with individuals undergoing life transitions."},
+    {type:"Detail",question:"How does the passage characterise Finnish attitudes toward silence?",options:["Finnish people use silence to express disagreement","Silence is seen as a mark of sincerity and careful deliberation","Finnish culture discourages silence in professional settings","Silence is used primarily with strangers"],answer:1,explanation:"The passage states the Finnish tradition 'valorises silence as a mark of sincerity and careful deliberation.'"},
+    {type:"Inference",question:"What problem might arise when a Western negotiator interprets a Japanese counterpart's silence?",options:["The negotiator might speak more slowly","The negotiator might incorrectly conclude the Japanese party is unwilling or uninformed","The negotiator might adopt Japanese communicative norms","The negotiator might end negotiations due to budget constraints"],answer:1,explanation:"If Western norms interpret silence as evasion, a negotiator might wrongly assume Japanese silence (meaning thoughtful consideration) indicates reluctance."},
+    {type:"Vocabulary in context",question:"'Valorises' most nearly means:",options:["Criticises or questions","Regards as having value or worth","Measures or quantifies","Avoids or suppresses"],answer:1,explanation:"'Valorises silence as a mark of sincerity' means regards silence positively, treating it as having communicative value."}
+  ]},
+  {id:6,title:"The Gut-Brain Axis",topic:"Biomedical Science",level:3,wordCount:270,
+  text:`The notion that the gastrointestinal tract is governed solely by directives from the central nervous system has been comprehensively overturned by a burgeoning body of research into what scientists now term the gut-brain axis — a bidirectional communication network linking the enteric nervous system of the digestive tract with the brain via neural, hormonal, and immunological pathways.\n\nThe enteric nervous system, sometimes referred to as the 'second brain,' comprises approximately 500 million neurons embedded within the walls of the gastrointestinal tract. This system is capable of autonomous function, regulating digestion independently of central nervous system input. Crucially, research has established that communication along the vagus nerve — the primary conduit of the gut-brain axis — is predominantly afferent; that is, signals travel predominantly from the gut to the brain rather than in the reverse direction that the traditional model implied.\n\nOf particular scientific interest is the role of the gut microbiome — the vast community of microorganisms inhabiting the digestive tract — in modulating this axis. These microorganisms produce neuroactive compounds including short-chain fatty acids, neurotransmitter precursors, and even neurotransmitters themselves such as serotonin, approximately 90 percent of which is synthesised in the gut rather than the brain. Perturbations in the composition of the microbiome have been associated with neurological and psychiatric conditions including anxiety, depression, autism spectrum disorder, and Parkinson's disease.\n\nThese discoveries are reshaping therapeutic approaches to neurological and psychiatric conditions. Probiotic interventions, dietary modifications, and faecal microbiota transplantation are being investigated as adjunctive treatments for conditions previously considered purely neurological. While the field remains nascent and causal mechanisms are not yet fully elucidated, the gut-brain axis represents one of the most fertile frontiers in contemporary biomedical research.`,
+  questions:[
+    {type:"Main idea",question:"What is the passage primarily about?",options:["How to treat depression using diet alone","The bidirectional communication system between the gut and brain and its implications","Why the brain contains more neurons than the gut","The history of gastrointestinal medicine"],answer:1,explanation:"The passage explains the gut-brain axis, the microbiome's role, and its implications for treating neurological conditions."},
+    {type:"Detail",question:"What does 'predominantly afferent' mean in this context?",options:["Signals travel faster in one direction","Signals travel primarily from the gut to the brain, not the reverse","The vagus nerve connects to the immune system","Neural signals are blocked in certain conditions"],answer:1,explanation:"The passage defines afferent as signals travelling 'from the gut to the brain rather than in the reverse direction.'"},
+    {type:"Detail",question:"Where is approximately 90 percent of serotonin synthesised?",options:["In the prefrontal cortex","In the gut","In the vagus nerve","In the immune system"],answer:1,explanation:"The passage explicitly states 'approximately 90 percent of [serotonin] is synthesised in the gut rather than the brain.'"},
+    {type:"Inference",question:"What does the passage imply about current treatments for depression and anxiety?",options:["They are entirely ineffective","They may be incomplete as they do not address gut-related mechanisms","Diet-based interventions are already standard practice","Psychiatric conditions are caused solely by microbiome imbalances"],answer:1,explanation:"Gut-microbiome interventions are described as 'adjunctive' and the field as 'nascent,' implying current treatments exist but may be supplemented."},
+    {type:"Vocabulary in context",question:"'Nascent' most nearly means:",options:["Well-established and widely accepted","In an early stage of development","Controversial and disputed","Declining in importance"],answer:1,explanation:"'The field remains nascent' means it is still in an early stage of development."}
+  ]},
+  {id:7,title:"Tragedy of the Commons",topic:"Environmental Economics",level:3,wordCount:278,
+  text:`Garrett Hardin's 1968 essay 'The Tragedy of the Commons' introduced a conceptual framework that has profoundly shaped debates in environmental economics, political science, and public policy. Hardin posited that when a resource is held in common — accessible to all without restriction — rational self-interest will inevitably drive individual actors to exploit it to the point of depletion, even when all parties recognise that collective restraint would serve the long-term interests of the group.\n\nHardin illustrated his argument with the metaphor of a shared pasture: each herdsman, calculating the personal benefit of adding one more animal against the cost of overgrazing shared among all, will rationally choose to expand his herd. The individual benefit is immediate and concentrated; the cost is diffuse and deferred. Multiplied across all herdsmen, this logic inexorably degrades the commons. Hardin concluded that such tragedies were inevitable in the absence of either privatisation of the commons or coercive state regulation.\n\nHowever, Hardin's analysis has been subjected to substantial empirical critique. Elinor Ostrom, who received the Nobel Memorial Prize in Economic Sciences in 2009, documented numerous historical and contemporary cases in which communities successfully managed shared resources — including Swiss alpine meadows, Japanese fishing villages, and Spanish irrigation systems — without privatisation or state coercion. Ostrom identified a set of design principles common to successful commons governance, including clearly defined boundaries, rules adapted to local conditions, mechanisms for collective decision-making, and graduated sanctions for rule violations.\n\nThe enduring relevance of this debate is evident in contemporary challenges from global fisheries to atmospheric carbon: resources shared by all of humanity for which the logic of self-interested exploitation remains devastatingly applicable, yet for which Ostrom's insights suggest that collective governance solutions are both possible and necessary.`,
+  questions:[
+    {type:"Main idea",question:"What is the passage primarily concerned with?",options:["Garrett Hardin's contributions to environmental science","The debate over whether shared resources inevitably lead to overexploitation","Why privatisation is the only solution to environmental problems","Elinor Ostrom's Nobel Prize-winning research"],answer:1,explanation:"The passage presents Hardin's thesis, Ostrom's empirical challenge to it, and applies both to contemporary environmental problems."},
+    {type:"Detail",question:"Why does individual rational behaviour lead to collective harm in Hardin's model?",options:["Because individuals are inherently greedy","Because individual benefits are immediate and concentrated while costs are diffuse and deferred","Because governments fail to enforce regulations","Because privatisation encourages overexploitation"],answer:1,explanation:"Hardin's logic rests on the asymmetry between concentrated individual benefit and diffuse, deferred collective cost."},
+    {type:"Detail",question:"What did Ostrom's research demonstrate?",options:["That privatisation is always the most effective solution","That communities can successfully manage shared resources without privatisation or state coercion","That Hardin's model accurately predicts all real-world commons","That fishing communities always overexploit their resources"],answer:1,explanation:"Ostrom documented successful community management of commons in Switzerland, Japan, and Spain without privatisation or coercive regulation."},
+    {type:"Inference",question:"What does the passage imply about global climate change as a commons problem?",options:["It is fundamentally different and cannot be solved","It demonstrates both the applicability of self-interested exploitation logic and the potential for collective governance","National governments have already solved it","Ostrom's design principles are irrelevant at a global scale"],answer:1,explanation:"The passage calls atmospheric carbon a resource where self-interested exploitation logic applies, yet Ostrom's insights suggest collective governance is possible."},
+    {type:"Vocabulary in context",question:"'Inexorably' most nearly means:",options:["Occasionally and unpredictably","In a way that cannot be stopped or prevented","Slowly and gradually","Efficiently and rationally"],answer:1,explanation:"'This logic inexorably degrades the commons' means the degradation cannot be stopped once the logic is set in motion."}
+  ]},
+  {id:8,title:"The Architecture of Memory",topic:"Cognitive Psychology",level:3,wordCount:266,
+  text:`Human memory is neither a passive repository of recorded experience nor a unitary system, but rather an ensemble of distinct yet interacting processes that encode, consolidate, store, and retrieve information through mechanisms that remain only partially understood. Contemporary cognitive neuroscience distinguishes among several memory systems, each subserved by different neural substrates and susceptible to different patterns of impairment.\n\nDeclarative memory — encompassing both episodic memory for personally experienced events and semantic memory for general world knowledge — depends critically upon the hippocampus and associated medial temporal lobe structures for its initial encoding and consolidation. The amnesic syndrome resulting from hippocampal damage, most famously documented in the case of patient H.M., who underwent bilateral hippocampal resection in 1953, demonstrated that such damage prevents the formation of new declarative memories while leaving older memories and procedural skills intact.\n\nProcedural memory — knowledge of how to perform skills and habits — operates largely independently of the hippocampal system and is subserved instead by the basal ganglia and cerebellum. This dissociation explains why patients with severe hippocampal amnesia can learn new motor skills through practice without any conscious recollection of having practised. H.M., for instance, showed improvement on mirror-drawing tasks across repeated sessions despite having no memory of performing them.\n\nPerhaps most counterintuitively, memory is not a faithful record but an active reconstruction. Each retrieval of a memory is subject to modification by current knowledge, emotional state, and social context — a phenomenon with profound implications for eyewitness testimony, therapeutic practice, and our understanding of personal identity itself. The memory we recall today is not the memory we encoded yesterday, but a present-tense reconstruction shaped by everything that has occurred in between.`,
+  questions:[
+    {type:"Main idea",question:"What is the central theme of this passage?",options:["The case study of patient H.M.","Memory as a complex, multi-system process that reconstructs rather than records experience","Why the hippocampus is the most important brain structure","The differences between declarative and procedural memory only"],answer:1,explanation:"The passage covers multiple memory systems and culminates in the point that memory is reconstructive — together forming a picture of memory's complexity."},
+    {type:"Detail",question:"What did the case of patient H.M. demonstrate?",options:["Hippocampal damage destroys all memory including procedural skills","It prevents new declarative memory formation while leaving older memories and procedural skills intact","It causes personality changes but not memory loss","It primarily affects semantic rather than episodic memory"],answer:1,explanation:"H.M.'s case showed that bilateral hippocampal damage prevents new declarative memory formation while leaving procedural skills intact."},
+    {type:"Detail",question:"Which brain structures support procedural memory?",options:["The hippocampus and medial temporal lobe","The basal ganglia and cerebellum","The prefrontal cortex and amygdala","The thalamus and hypothalamus"],answer:1,explanation:"The passage states procedural memory 'is subserved instead by the basal ganglia and cerebellum.'"},
+    {type:"Inference",question:"What does the passage imply about eyewitness testimony in legal contexts?",options:["It is highly reliable because memory is a faithful record","It may be unreliable because memories are reconstructed and subject to modification","Courts should rely entirely on physical evidence","Emotional witnesses have more accurate memories"],answer:1,explanation:"If memory is an active reconstruction shaped by current knowledge and emotion, eyewitness accounts may be systematically distorted."},
+    {type:"Vocabulary in context",question:"'Subserved' most nearly means:",options:["Controlled and suppressed","Supported or maintained by","Damaged or impaired by","Studied or documented by"],answer:1,explanation:"'Subserved by the basal ganglia' means supported or maintained by those structures."}
+  ]},
+  {id:9,title:"Quantum Computing and Cryptography",topic:"Quantum Computing",level:4,wordCount:280,
+  text:`The prospect of large-scale quantum computing has introduced an existential dimension to the field of cryptography that demands urgent attention from governments, financial institutions, and technology companies worldwide. Contemporary public-key cryptographic systems, which underpin virtually all secure digital communication, rest upon the computational intractability of certain mathematical problems — most notably integer factorisation and the discrete logarithm problem — that quantum computers are theoretically capable of solving with devastating efficiency.\n\nThe threat originates from Shor's algorithm, developed by mathematician Peter Shor in 1994, which demonstrated that a sufficiently powerful quantum computer could factorise large integers in polynomial rather than exponential time. Since the security of RSA encryption — the algorithm protecting the vast majority of internet transactions — depends upon the practical impossibility of factorising the product of two large prime numbers using classical hardware, a quantum computer capable of running Shor's algorithm at scale would render this protection obsolete.\n\nThe timeline for this threat remains genuinely uncertain. Current quantum computers, though advancing rapidly, possess far fewer stable qubits than would be required to break contemporary encryption standards. However, a phenomenon known as 'harvest now, decrypt later' has introduced urgency irrespective of immediate capability: adversaries may currently be archiving encrypted communications with the intention of decrypting them once sufficiently powerful quantum hardware becomes available.\n\nIn response, the National Institute of Standards and Technology finalised a suite of post-quantum cryptographic algorithms in 2024, designed to resist attacks from both classical and quantum computers. The migration of global digital infrastructure to these quantum-resistant standards represents an enormous technical undertaking, complicated by the long operational lifespans of embedded systems and the difficulty of retrofitting cryptographic protections into legacy architectures. Cryptographers and policymakers broadly agree that the transition must begin immediately if the integrity of secure communications is to be preserved.`,
+  questions:[
+    {type:"Main idea",question:"What is the passage primarily about?",options:["The technical details of how quantum computers are built","The threat quantum computing poses to current encryption and the emerging response","Why RSA encryption is superior to other methods","Peter Shor's contributions to mathematics"],answer:1,explanation:"The passage explains how quantum computing threatens current encryption, the timeline uncertainty, and the response through post-quantum standards."},
+    {type:"Detail",question:"Why does Shor's algorithm threaten RSA encryption?",options:["It makes computers faster at sending messages","It can factorise large integers efficiently, breaking the mathematical foundation of RSA","It exploits weaknesses in internet hardware","It requires less energy than classical methods"],answer:1,explanation:"RSA security depends on the difficulty of factorising large numbers. Shor's algorithm does this in polynomial time."},
+    {type:"Detail",question:"What is the 'harvest now, decrypt later' threat?",options:["Using quantum computers to generate new encryption keys","Storing currently encrypted data with the intention of decrypting it once quantum computers are powerful enough","Attacking live communication systems in real time","Harvesting computing power from multiple devices"],answer:1,explanation:"The passage defines this as adversaries 'archiving encrypted communications with the intention of decrypting them once sufficiently powerful quantum hardware becomes available.'"},
+    {type:"Inference",question:"What does the passage imply about the urgency of transitioning to post-quantum cryptography?",options:["The transition can wait until quantum computers are actually powerful enough","The transition must begin now due to long migration timelines and the harvest now threat","Only governments need to transition","The transition is technically straightforward"],answer:1,explanation:"Both the harvest now threat and the 'enormous technical undertaking' of migration imply the transition must start immediately."},
+    {type:"Vocabulary in context",question:"'Intractability' most nearly means:",options:["Simplicity and ease of solution","Extreme difficulty or practical impossibility of solution","Unpredictability of outcomes","Dependence on large amounts of data"],answer:1,explanation:"'Computational intractability of certain mathematical problems' means those problems are practically impossible to solve computationally."}
+  ]},
+  {id:10,title:"Epigenetics and Inheritance",topic:"Evolutionary Biology",level:4,wordCount:284,
+  text:`The neo-Darwinian synthesis of the mid-twentieth century consolidated a model of inheritance centred exclusively upon the transmission of DNA sequences from parent to offspring. Environmental influences, in this framework, could shape the phenotype of an individual organism but could not be passed to subsequent generations — a principle enshrined in the doctrine of the Weismann barrier, which held that the germline was categorically insulated from somatic experience. Contemporary epigenetics has introduced profound complications to this picture.\n\nEpigenetics refers to heritable changes in gene expression that do not involve alterations to the underlying DNA sequence itself. These changes are mediated primarily by two molecular mechanisms: DNA methylation, in which methyl groups are attached to cytosine residues in the genome, typically suppressing gene expression; and histone modification, in which chemical groups are added to or removed from the proteins around which DNA is wound, altering the accessibility of genes to transcriptional machinery. Both mechanisms can regulate which genes are expressed in a given cell without changing the genetic code itself.\n\nOf particular significance to evolutionary theory is accumulating evidence that some epigenetic marks can be transmitted across generations — a phenomenon termed transgenerational epigenetic inheritance. Studies of populations that experienced severe famine, including descendants of individuals exposed to the Dutch Hunger Winter of 1944-1945 and the Swedish Överkalix cohort, have documented metabolic and cardiovascular alterations in the children and grandchildren of those directly affected, alterations that appear to be mediated by epigenetic rather than genetic mechanisms.\n\nThese findings have reignited debate about the boundaries of inheritance and the sufficiency of the neo-Darwinian framework. Some theorists argue that transgenerational epigenetic inheritance represents a form of 'soft inheritance' compatible with an extended evolutionary synthesis; others contend that the mechanisms are too limited and reversible to constitute genuine Lamarckian inheritance. What is beyond dispute is that the relationship between environment, genome, and heredity is considerably more complex than the mid-century consensus acknowledged.`,
+  questions:[
+    {type:"Main idea",question:"What is the central claim of this passage?",options:["DNA methylation is the most important process in genetics","Epigenetic discoveries have complicated the traditional model of inheritance","The neo-Darwinian synthesis was entirely wrong","Famine causes permanent genetic mutations"],answer:1,explanation:"The passage argues that epigenetics — especially transgenerational inheritance — challenges the neo-Darwinian view that only DNA sequences are inherited."},
+    {type:"Detail",question:"What is the Weismann barrier?",options:["A physical membrane separating nucleus from cytoplasm","The principle that the germline is insulated from somatic experience","A barrier preventing DNA methylation in germ cells","The limit of what epigenetic mechanisms can change"],answer:1,explanation:"The Weismann barrier holds 'that the germline was categorically insulated from somatic experience' — environmental effects cannot be passed to offspring."},
+    {type:"Detail",question:"How does histone modification affect gene expression?",options:["It changes the DNA sequence of affected genes","It alters the accessibility of genes to transcriptional machinery by modifying proteins around which DNA is wound","It attaches methyl groups to cytosine residues","It prevents DNA from replicating"],answer:1,explanation:"Histone modification alters 'the accessibility of genes to transcriptional machinery' without changing the DNA sequence."},
+    {type:"Inference",question:"What does the Dutch Hunger Winter research suggest?",options:["That genetic mutations caused by famine are common","That environmental experiences can affect the biology of subsequent generations through non-genetic mechanisms","That metabolic diseases are entirely genetically determined","That the neo-Darwinian synthesis accurately predicted these findings"],answer:1,explanation:"The Dutch Hunger Winter data shows metabolic effects in grandchildren of famine survivors 'mediated by epigenetic rather than genetic mechanisms.'"},
+    {type:"Vocabulary in context",question:"'Phenotype' most nearly means:",options:["The complete DNA sequence of an organism","The observable characteristics or traits of an organism","The collection of epigenetic marks on a genome","The evolutionary history of a species"],answer:1,explanation:"'Shape the phenotype' refers to observable characteristics — how the organism looks and functions — as distinct from its genotype."}
+  ]}
+];
+
+// ===== SIMPLE WORD DICTIONARY (top academic words) =====
+const DICT = {
+  "proliferation":{"pos":"noun","ja":"急激な増加・拡散"},
+  "unequivocal":{"pos":"adj","ja":"明確な・疑いのない"},
+  "counterintuitive":{"pos":"adj","ja":"直感に反する"},
+  "debilitating":{"pos":"adj","ja":"衰弱させる・無力化する"},
+  "dissatisfaction":{"pos":"noun","ja":"不満・不満足"},
+  "opportunity":{"pos":"noun","ja":"機会・チャンス"},
+  "deliberation":{"pos":"noun","ja":"熟考・審議"},
+  "sustainable":{"pos":"adj","ja":"持続可能な"},
+  "paradigm":{"pos":"noun","ja":"パラダイム・思考の枠組み"},
+  "neuroplasticity":{"pos":"noun","ja":"神経可塑性"},
+  "synaptic":{"pos":"adj","ja":"シナプスの"},
+  "structural":{"pos":"adj","ja":"構造的な"},
+  "neurogenesis":{"pos":"noun","ja":"神経新生"},
+  "longitudinal":{"pos":"adj","ja":"縦断的な・長期的な"},
+  "hippocampal":{"pos":"adj","ja":"海馬の"},
+  "malleable":{"pos":"adj","ja":"可塑的な・変えられる"},
+  "rehabilitation":{"pos":"noun","ja":"リハビリテーション・回復"},
+  "algorithmic":{"pos":"adj","ja":"アルゴリズムの"},
+  "bias":{"pos":"noun","ja":"偏り・バイアス"},
+  "accountability":{"pos":"noun","ja":"責任・説明責任"},
+  "transparency":{"pos":"noun","ja":"透明性"},
+  "disparity":{"pos":"noun","ja":"格差・不均衡"},
+  "attributable":{"pos":"adj","ja":"〜に起因する"},
+  "perpetuate":{"pos":"verb","ja":"永続させる・持続させる"},
+  "inequity":{"pos":"noun","ja":"不公平・不平等"},
+  "formidable":{"pos":"adj","ja":"手ごわい・難しい"},
+  "autonomous":{"pos":"adj","ja":"自律的な・自立した"},
+  "regulatory":{"pos":"adj","ja":"規制の・調整の"},
+  "exacerbates":{"pos":"verb","ja":"悪化させる"},
+  "discrepancy":{"pos":"noun","ja":"不一致・差異"},
+  "anthropogenic":{"pos":"adj","ja":"人為的な"},
+  "epidemiological":{"pos":"adj","ja":"疫学的な"},
+  "mortality":{"pos":"noun","ja":"死亡率"},
+  "mitigation":{"pos":"noun","ja":"緩和・軽減"},
+  "evapotranspiration":{"pos":"noun","ja":"蒸発散（植物の水分放出）"},
+  "valorises":{"pos":"verb","ja":"価値を認める・尊重する"},
+  "interlocutors":{"pos":"noun","ja":"対話の相手・話し相手"},
+  "competence":{"pos":"noun","ja":"能力・コンピテンシー"},
+  "gastrointestinal":{"pos":"adj","ja":"消化管の・胃腸の"},
+  "enteric":{"pos":"adj","ja":"腸の"},
+  "bidirectional":{"pos":"adj","ja":"双方向の"},
+  "afferent":{"pos":"adj","ja":"求心性の（脳へ向かう）"},
+  "microbiome":{"pos":"noun","ja":"微生物叢（腸内細菌群）"},
+  "neurotransmitter":{"pos":"noun","ja":"神経伝達物質"},
+  "serotonin":{"pos":"noun","ja":"セロトニン"},
+  "perturbation":{"pos":"noun","ja":"乱れ・撹乱"},
+  "adjunctive":{"pos":"adj","ja":"補助的な・付加的な"},
+  "nascent":{"pos":"adj","ja":"発展途上の・初期段階の"},
+  "elucidated":{"pos":"verb","ja":"解明された"},
+  "posited":{"pos":"verb","ja":"主張した・仮定した"},
+  "depletion":{"pos":"noun","ja":"枯渇・減少"},
+  "inexorably":{"pos":"adv","ja":"止めようもなく・必然的に"},
+  "coercive":{"pos":"adj","ja":"強制的な"},
+  "privatisation":{"pos":"noun","ja":"民営化"},
+  "empirical":{"pos":"adj","ja":"実証的な・経験に基づく"},
+  "sanctions":{"pos":"noun","ja":"制裁・罰則"},
+  "declarative":{"pos":"adj","ja":"宣言的な（記憶の種類）"},
+  "episodic":{"pos":"adj","ja":"エピソード記憶の"},
+  "semantic":{"pos":"adj","ja":"意味記憶の・意味論的な"},
+  "hippocampus":{"pos":"noun","ja":"海馬（脳の部位）"},
+  "resection":{"pos":"noun","ja":"切除（手術）"},
+  "procedural":{"pos":"noun","ja":"手続き記憶の"},
+  "subserved":{"pos":"verb","ja":"〜によって支えられる"},
+  "cerebellum":{"pos":"noun","ja":"小脳"},
+  "reconstruction":{"pos":"noun","ja":"再構築・再現"},
+  "cryptography":{"pos":"noun","ja":"暗号技術"},
+  "intractability":{"pos":"noun","ja":"解決困難性"},
+  "factorisation":{"pos":"noun","ja":"因数分解"},
+  "polynomial":{"pos":"adj","ja":"多項式的な（計算時間）"},
+  "exponential":{"pos":"adj","ja":"指数関数的な"},
+  "obsolete":{"pos":"adj","ja":"時代遅れになった・廃れた"},
+  "adversaries":{"pos":"noun","ja":"敵・競合相手"},
+  "retrofitting":{"pos":"verb","ja":"後付けする・改修する"},
+  "epigenetics":{"pos":"noun","ja":"エピジェネティクス"},
+  "heritable":{"pos":"adj","ja":"遺伝可能な・受け継げる"},
+  "methylation":{"pos":"noun","ja":"メチル化"},
+  "cytosine":{"pos":"noun","ja":"シトシン（塩基の一種）"},
+  "histone":{"pos":"noun","ja":"ヒストン（タンパク質）"},
+  "transcriptional":{"pos":"adj","ja":"転写の"},
+  "transgenerational":{"pos":"adj","ja":"世代を超えた"},
+  "germline":{"pos":"noun","ja":"生殖細胞系列"},
+  "somatic":{"pos":"adj","ja":"体細胞の・身体の"},
+  "phenotype":{"pos":"noun","ja":"表現型（外見的特徴）"},
+  "Lamarckian":{"pos":"adj","ja":"ラマルク的な（獲得形質の遺伝）"}
+};
+
+// ===== STATE =====
+let ST={
+  wpmHistory:[],
+  wordStorage:[],
+  completedIds:[],
+  currentPassage:null,
+  startTime:null,
+  timerInterval:null,
+  selectedAnswers:{},
+  answered:false,
+  currentWordEl:null
+};
+try{
+  ST.wpmHistory=JSON.parse(localStorage.getItem('rs_wpm')||'[]');
+  ST.wordStorage=JSON.parse(localStorage.getItem('rs_words')||'[]');
+  ST.completedIds=JSON.parse(localStorage.getItem('rs_completed')||'[]');
+}catch(e){}
+
+function save(){
+  try{
+    localStorage.setItem('rs_wpm',JSON.stringify(ST.wpmHistory));
+    localStorage.setItem('rs_words',JSON.stringify(ST.wordStorage));
+    localStorage.setItem('rs_completed',JSON.stringify(ST.completedIds));
+  }catch(e){}
+}
+
+// ===== SCREEN NAV =====
+function showScreen(name,btn){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active-nav'));
+  if(btn)btn.classList.add('active-nav');
+  else{
+    const btns=document.querySelectorAll('.nav-btn');
+    if(name==='list')btns[0].classList.add('active-nav');
+    if(name==='storage')btns[1].classList.add('active-nav');
+  }
+  if(name==='list')renderPassageList();
+  if(name==='storage')renderWordStorage();
+}
+
+function updateStorageCount(){
+  const n=ST.wordStorage.length;
+  document.getElementById('storage-count').textContent=n?'('+n+')':'';
+}
+
+// ===== PASSAGE LIST =====
+function getLevelLabel(lv){return['','Level 1','Level 2','Level 3','Level 4'][lv]||'Level '+lv;}
+function getLevelClass(lv){return['','lv1','lv2','lv3','lv4'][lv]||'lv1';}
+function getTargetWpm(lv){return[160,160,180,200,220][lv]||160;}
+
+function renderPassageList(){
+  const done=ST.completedIds.length;
+  const total=PASSAGES.length;
+  document.getElementById('list-progress-text').textContent=done+' / '+total+' completed';
+  if(ST.wpmHistory.length>0)renderWpmTrend();
+  const list=document.getElementById('passage-list');
+  list.innerHTML=PASSAGES.map(p=>{
+    const isCompleted=ST.completedIds.includes(p.id);
+    return`<div class="passage-card${isCompleted?' completed':''}" onclick="openPassage(${p.id})">
+      <div class="pc-top">
+        <div class="pc-title">${p.title}${isCompleted?'<span class="pc-check">✓</span>':''}</div>
+        <span class="pc-level ${getLevelClass(p.level)}">${getLevelLabel(p.level)}</span>
+      </div>
+      <div class="pc-meta">${p.topic} · ${p.wordCount} words</div>
+    </div>`;
+  }).join('');
+}
+
+function renderWpmTrend(){
+  const hist=ST.wpmHistory.slice(-7);if(!hist.length)return;
+  document.getElementById('wpm-trend-section').style.display='block';
+  const max=Math.max(...hist.map(h=>h.wpm),1);
+  document.getElementById('wpm-history-chart').innerHTML=hist.map((h,i)=>
+    `<div class="wpm-bar${i===hist.length-1?' cur':''}" style="height:${Math.round(h.wpm/max*100)}%" title="${h.wpm} WPM"></div>`
+  ).join('');
+}
+
+// ===== OPEN PASSAGE =====
+function openPassage(id){
+  const p=PASSAGES.find(x=>x.id===id);
+  if(!p)return;
+  ST.currentPassage=p;
+  ST.selectedAnswers={};
+  ST.answered=false;
+
+  document.getElementById('phase-reading').style.display='block';
+  document.getElementById('phase-questions').style.display='none';
+  document.getElementById('start-btn').style.display='block';
+  document.getElementById('finish-btn').style.display='none';
+  document.getElementById('passage-overlay').style.display='flex';
+  document.getElementById('timer').textContent='0:00';
+
+  document.getElementById('level-label').textContent=getLevelLabel(p.level)+' — '+p.topic;
+  document.getElementById('target-wpm').textContent=getTargetWpm(p.level);
+  document.getElementById('word-count-display').textContent=p.wordCount;
+  document.getElementById('topic-display').textContent=p.topic;
+  document.getElementById('passage-text-wrap').className='passage-blur';
+  document.getElementById('passage-text-wrap').innerHTML=tokenize(p.text);
+
+  showScreen('reading',null);
+}
+
+function tokenize(text){
+  const paras=text.split('\n\n');
+  return paras.map(para=>{
+    const tokenized=para.replace(/([A-Za-z'][A-Za-z'-]*)/g,(word)=>{
+      const stocked=ST.wordStorage.some(w=>w.word.toLowerCase()===word.toLowerCase());
+      const inDict=!!(DICT[word.toLowerCase()]||DICT[word]);
+      return`<span class="word-token${stocked?' stocked':''}" data-word="${word}" onclick="lookupWord(this,event)">${word}</span>`;
+    });
+    return`<p style="margin-bottom:1em">${tokenized}</p>`;
+  }).join('');
+}
+
+// ===== READING =====
+function startReading(){
+  document.getElementById('passage-overlay').style.display='none';
+  document.getElementById('passage-text-wrap').className='passage-reveal';
+  document.getElementById('start-btn').style.display='none';
+  document.getElementById('finish-btn').style.display='block';
+  ST.startTime=Date.now();
+  ST.timerInterval=setInterval(()=>{
+    const el=(Date.now()-ST.startTime)/1000;
+    const m=Math.floor(el/60),s=Math.floor(el%60);
+    document.getElementById('timer').textContent=m+':'+(s<10?'0':'')+s;
+  },200);
+}
+
+function finishReading(){
+  clearInterval(ST.timerInterval);
+  const elapsed=(Date.now()-ST.startTime)/1000;
+  const wpm=Math.round((ST.currentPassage.wordCount/elapsed)*60);
+  ST.wpmHistory.push({wpm,passageId:ST.currentPassage.id,date:new Date().toLocaleDateString('ja-JP')});
+  if(ST.wpmHistory.length>30)ST.wpmHistory=ST.wpmHistory.slice(-30);
+  save();
+
+  document.getElementById('phase-reading').style.display='none';
+  document.getElementById('phase-questions').style.display='block';
+
+  const m=Math.floor(elapsed/60),s=Math.floor(elapsed%60);
+  document.getElementById('result-wpm').textContent=wpm;
+  document.getElementById('result-time').textContent=m+':'+(s<10?'0':'')+s;
+  document.getElementById('result-words').textContent=ST.currentPassage.wordCount;
+
+  const target=getTargetWpm(ST.currentPassage.level);
+  const prev=ST.wpmHistory.length>1?ST.wpmHistory[ST.wpmHistory.length-2]:null;
+  let fb=wpm>=target?'<span class="chip chip-up">● Above target</span>':'<span class="chip chip-same">● Below target ('+target+' WPM)</span>';
+  if(prev){const d=wpm-prev.wpm;fb+=d>0?'<span class="chip chip-up">↑ +'+d+' vs last</span>':d<0?'<span class="chip chip-down">↓ '+d+' vs last</span>':'<span class="chip chip-same">→ Same as last</span>';}
+  document.getElementById('wpm-feedback').innerHTML=fb;
+  document.getElementById('check-btn').style.display='block';
+  document.getElementById('score-section').style.display='none';
+  renderQuestions();
+}
+
+function renderQuestions(){
+  const qs=ST.currentPassage.questions;
+  document.getElementById('questions-wrap').innerHTML=qs.map((q,qi)=>
+    `<div class="q-item" id="q-${qi}">
+      <div class="q-type">${q.type}</div>
+      <div class="q-text">${q.question}</div>
+      <div class="q-opts">${q.options.map((o,oi)=>
+        `<button class="q-opt" id="opt-${qi}-${oi}" onclick="selectAnswer(${qi},${oi})">
+          <span class="opt-letter">${String.fromCharCode(65+oi)}</span>
+          <span>${o.replace(/^[A-D]\)\s*/,'')}</span>
+        </button>`).join('')}
+      </div>
+      <div class="explanation" id="exp-${qi}">${q.explanation||''}</div>
+    </div>`
+  ).join('');
+}
+
+function selectAnswer(qi,oi){
+  if(ST.answered)return;
+  ST.selectedAnswers[qi]=oi;
+  document.querySelectorAll(`#q-${qi} .q-opt`).forEach(b=>b.classList.remove('selected'));
+  document.getElementById(`opt-${qi}-${oi}`).classList.add('selected');
+}
+
+function checkAnswers(){
+  if(ST.answered)return;
+  ST.answered=true;
+  const qs=ST.currentPassage.questions;let correct=0;
+  qs.forEach((q,qi)=>{
+    const sel=ST.selectedAnswers[qi],ans=q.answer;
+    document.querySelectorAll(`#q-${qi} .q-opt`).forEach((b,oi)=>{
+      if(oi===ans)b.classList.add('correct');
+      else if(oi===sel&&sel!==ans)b.classList.add('wrong');
+    });
+    if(sel===ans)correct++;
+    const exp=document.getElementById('exp-'+qi);
+    if(exp)exp.style.display='block';
+  });
+  document.getElementById('check-btn').style.display='none';
+  document.getElementById('score-section').style.display='block';
+  document.getElementById('score-text').textContent=correct+' / '+qs.length;
+  document.getElementById('score-sub').textContent=['Keep practicing!','Good effort!','Nice work!','Excellent!','Perfect!'][Math.min(Math.round(correct/qs.length*4),4)];
+  if(!ST.completedIds.includes(ST.currentPassage.id)){
+    ST.completedIds.push(ST.currentPassage.id);save();
+  }
+}
+
+// ===== WORD LOOKUP =====
+function lookupWord(el,e){
+  e.stopPropagation();
+  const word=el.dataset.word;if(!word||word.length<2)return;
+  if(ST.currentWordEl)ST.currentWordEl.style.background='';
+  ST.currentWordEl=el;
+  const entry=DICT[word.toLowerCase()]||DICT[word];
+  document.getElementById('tt-word').textContent=word;
+  document.getElementById('tt-pos').textContent=entry?entry.pos:'';
+  document.getElementById('tt-meaning').textContent=entry?entry.ja:'（辞書にない単語です）';
+  const isStocked=ST.wordStorage.some(w=>w.word.toLowerCase()===word.toLowerCase());
+  const sb=document.getElementById('tt-stock-btn');
+  sb.textContent=isStocked?'✓ In word storage':'+ Stock this word';
+  sb.className='tt-btn'+(isStocked?' stocked-state':'');
+  document.getElementById('tt-overlay').classList.add('open');
+}
+
+function closeTT(e){
+  if(e.target===document.getElementById('tt-overlay')||e.target.classList.contains('tt-backdrop')){
+    document.getElementById('tt-overlay').classList.remove('open');
+  }
+}
+
+function addDays(d,n){const r=new Date(d);r.setDate(r.getDate()+n);return r;}
+
+function stockWord(){
+  const word=document.getElementById('tt-word').textContent;
+  const meaning=document.getElementById('tt-meaning').textContent;
+  const pos=document.getElementById('tt-pos').textContent;
+  const idx=ST.wordStorage.findIndex(w=>w.word.toLowerCase()===word.toLowerCase());
+  const sb=document.getElementById('tt-stock-btn');
+  if(idx>=0){
+    ST.wordStorage.splice(idx,1);
+    sb.textContent='+ Stock this word';sb.className='tt-btn';
+    document.querySelectorAll('.word-token').forEach(t=>{if(t.dataset.word&&t.dataset.word.toLowerCase()===word.toLowerCase())t.classList.remove('stocked');});
+  }else{
+    const now=new Date();
+    ST.wordStorage.unshift({word,pos,meaning,addedDate:now.toLocaleDateString('ja-JP'),reviewDates:[addDays(now,1),addDays(now,3),addDays(now,7)].map(d=>d.toLocaleDateString('ja-JP'))});
+    sb.textContent='✓ In word storage';sb.className='tt-btn stocked-state';
+    document.querySelectorAll('.word-token').forEach(t=>{if(t.dataset.word&&t.dataset.word.toLowerCase()===word.toLowerCase())t.classList.add('stocked');});
+  }
+  save();updateStorageCount();
+}
+
+// ===== WORD STORAGE =====
+function renderWordStorage(){
+  const list=document.getElementById('word-storage-list');
+  const today=new Date().toLocaleDateString('ja-JP');
+  const due=ST.wordStorage.filter(w=>w.reviewDates&&w.reviewDates.includes(today));
+  const notice=document.getElementById('review-notice');
+  if(due.length>0){notice.style.display='flex';document.getElementById('review-notice-text').textContent=due.length+'語の復習日です';}
+  else notice.style.display='none';
+  if(!ST.wordStorage.length){list.innerHTML='<div class="empty-state">単語はまだありません。<br>長文を読みながら単語をタップして調べてみましょう。</div>';return;}
+  const sorted=[...ST.wordStorage].sort((a,b)=>{
+    const at=a.reviewDates&&a.reviewDates.includes(today);
+    const bt=b.reviewDates&&b.reviewDates.includes(today);
+    return at===bt?0:at?-1:1;
+  });
+  list.innerHTML='<div class="word-list">'+sorted.map(w=>{
+    const isDue=w.reviewDates&&w.reviewDates.includes(today);
+    const origIdx=ST.wordStorage.indexOf(w);
+    return`<div class="word-item">
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+          <span class="word-en">${w.word}</span>
+          <span class="word-pos">${w.pos||''}</span>
+        </div>
+        <div class="word-ja">${w.meaning||''}</div>
+        <div class="word-date">追加: ${w.addedDate||''}${isDue?' <span class="review-badge">今日復習</span>':''}</div>
+      </div>
+      <button class="remove-btn" onclick="removeWord(${origIdx})">削除</button>
+    </div>`;
+  }).join('')+'</div>';
+}
+
+function removeWord(idx){ST.wordStorage.splice(idx,1);save();updateStorageCount();renderWordStorage();}
+
+// ===== INIT =====
+updateStorageCount();
+renderPassageList();
+</script>
+</body>
+</html>
